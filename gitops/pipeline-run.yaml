@@ -1,0 +1,39 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: apaas-build-push-pipeline-run-99
+spec:
+  serviceAccountName: tekton-pipeline-service-account
+  pipelineRef:
+    name: test-app-deploy-pipeline
+  resources:
+    - name: docker-source
+      resourceSpec:
+        type: git
+        params:
+          - name: revision
+            value: master
+          - name: url
+            value: https://gitlab.com/apaas1/apaas-test-app.git
+    - name: registry-image
+      resourceSpec:
+        type: image
+        params:
+          - name: url
+            value: apaas-registry.ml/sccd/apaas-tekton-test-app-blue
+  params:
+    - name: pathToDockerFile
+      value: Dockerfile
+    - name: pathToContext
+      value: /
+    - name: apaasApiServer
+      value: http://apaas-api.ml:3030
+    - name: apaasTenant
+      value: sccd
+    - name: apaasNamespace
+      value: dev
+    - name: apaasRegistry
+      value: apaas-registry.ml
+    - name: apaasCommand
+      value: |
+        application deploy --instances 1 --application-name test-app --image apaas-registry.ml/sccd/apaas-tekton-test-app-blue:$IMAGE_TAG --image-pull-secret apaas-registry-secret --skip-envs --cpu-quota 300m --memory-quota 400 --storage-class rook-ceph-block --storage-capacity 1000 --pvc-mounts '[{ "hasSubPath": false, "mountPath": "/foo" }]' --ports '[{ "name": "http", "containerPort": "8080", "protocol": "TCP", "isTcpStream": false }]'

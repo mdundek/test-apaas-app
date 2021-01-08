@@ -1,0 +1,89 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: test-app-deploy-pipeline
+spec:
+  params:
+    - name: pathToDockerFile
+      type: string
+      description: The path to the dockerfile to build
+    - name: pathToContext
+      type: string
+      description: The build context used by Kaniko
+    - name: apaasApiServer
+      type: string
+      description: The APaaS API server URL
+    - name: apaasTenant
+      type: string
+      description: The APaaS target tenant name
+    - name: apaasNamespace
+      type: string
+      description: The APaaS target namespace
+      default: "" 
+    - name: apaasCommand
+      type: string
+      description: The apaasctl command to run
+    - name: apaasRegistry
+      type: string
+      description: The APaaS private registry host name
+      default: "" 
+  resources:
+    - name: docker-source
+      type: git
+    - name: registry-image
+      type: image
+  tasks:
+    - name: get-node-app-version
+      taskRef:
+        name: get-node-app-version
+        kind: ClusterTask
+      params:
+        - name: pathToContext
+          value: $(params.pathToContext)
+      resources:
+        inputs:
+          - name: docker-source
+            resource: docker-source
+
+    - name: clone-build-push
+      taskRef:
+        name: clone-build-push
+        kind: ClusterTask
+      params:
+        - name: pathToDockerFile
+          value: $(params.pathToDockerFile)
+        - name: pathToContext
+          value: $(params.pathToContext)
+        - name: appVersion
+          value: "$(tasks.get-node-app-version.results.version)"
+      resources:
+        inputs:
+          - name: docker-source
+            resource: docker-source
+        outputs:
+          - name: registry-image
+            resource: registry-image
+
+    - name: apaas-deploy-app
+      taskRef:
+        name: apaas-cli-command
+        kind: ClusterTask
+      runAfter:
+        - clone-build-push
+      params:
+      - name: apaasApiServer
+        value: $(params.apaasApiServer)
+      - name: apaasTenant
+        value: $(params.apaasTenant)
+      - name: apaasNamespace
+        value: $(params.apaasNamespace)
+      - name: appVersion
+        value: "$(tasks.get-node-app-version.results.version)"
+      - name: apaasRegistry
+        value: $(params.apaasRegistry)
+      - name: apaasCommand
+        value: "$(params.apaasCommand)"
+      resources:
+        inputs:
+          - name: registry-image
+            resource: registry-image

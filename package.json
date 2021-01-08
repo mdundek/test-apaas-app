@@ -1,0 +1,23 @@
+{
+  "name": "node-blue",
+  "version": "1.0.1",
+  "description": "NGINX html ===",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/botleg/nginx-html.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/botleg/nginx-html/issues"
+  },
+  "homepage": "https://github.com/botleg/nginx-html#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
